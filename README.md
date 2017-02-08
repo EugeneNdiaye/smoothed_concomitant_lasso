@@ -1,7 +1,7 @@
 # Smooth Concomitant Lasso
 
 
-This package implements a simple scikit-learn style estimator for the Smoothed Concomitant Lasso.
+This package implements a simple scikit-learn style estimator for the Smoothed Concomitant Lasso https://arxiv.org/abs/1606.02702.
 
 ## Motivation
 
