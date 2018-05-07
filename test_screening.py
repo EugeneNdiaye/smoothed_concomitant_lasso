@@ -10,7 +10,7 @@ from sklearn.datasets.mldata import fetch_mldata
 try:
     import mkl
     mkl.set_num_threads(1)
-except Exception, e:
+except Exception as e:
     pass
 
 
@@ -81,7 +81,7 @@ for ieps, eps in enumerate(eps_):
         duration = time.time() - begin
 
         times[iscreening, ieps] = duration
-        print screenings_names[iscreening]
+        print(screenings_names[iscreening])
 
 
 cols = ["#3498db",  # blue
