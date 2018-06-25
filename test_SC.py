@@ -50,10 +50,10 @@ print("Sigma estimation:")
 print("True sigma")
 print(sigma)
 
-print "hatsigma for SC"
+print("hatsigma for SC")
 print(sigmas[0])
 
-print "hatsigma for SBvG"
+print("hatsigma for SBvG")
 print(sigmas_SBvG[0])
 
 # Beta performance

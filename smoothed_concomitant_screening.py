@@ -77,7 +77,7 @@ def SC_path_screening(X, y, lambdas, sigma_0=None, eps=1e-4, max_iter=5000,
 
         if gaps[t] > eps * nrm_y:
 
-            print "warning: did not converge, t = ", t,
-            print "gap = ", gaps[t], "eps = ", eps
+            print("Warning: did not converge, t = %d" % t)
+            print("gap = %f, eps = %f" % (gaps[t], eps))
 
     return betas, sigmas, gaps, n_iters, n_active_features

@@ -46,7 +46,8 @@ def SC_path(X, y, lambdas, sigma_0=None, eps=1e-4, max_iter=5000, f=10):
 
         if gaps[t] > eps * nrm_y:
 
-            print "warning: did not converge, t = ", t, "max_iter = ", max_iter
-            print "gap = ", gaps[t]
+            print("Warning: did not converge, t = %d, max_iter = %d" %
+                  (t, max_iter))
+            print("gap = %f" % gaps[t])
 
     return betas, sigmas, gaps, n_iters
