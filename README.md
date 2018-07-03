@@ -101,7 +101,5 @@ To install ``Smoothed_Concomitant_Lasso`` from source, first download the source
 
 
 ```
-$ cython cd_smoothed_concomitant.pyx
-$ cython cd_smoothed_concomitant_screening.pyx
-$ python setup.py build_ext --inplace
+$ pip install -e .
 ```

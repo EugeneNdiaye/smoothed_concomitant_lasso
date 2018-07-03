@@ -9,3 +9,8 @@
 
 # Images:
 *.png
+
+# Build:
+*.egg-info
+build/*
+__pycache__/*
