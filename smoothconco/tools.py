@@ -9,8 +9,16 @@ import scipy.stats
 from SBvG import SBvG_path
 from sqrt_lasso_cvxpy import belloni_path
 
+"""
+Tools used in our numerical experiments in https://arxiv.org/abs/1606.02702
+"""
+
 
 def ST(x, tau):
+
+    """
+        Vectorial soft-thresholding at level u.
+    """
 
     return np.sign(x) * np.maximum(np.abs(x) - tau, 0)
 
@@ -40,6 +48,10 @@ def bp_cp(X, y, sigma=None, tau=None, MAX_ITER=10000):
 
 def get_lambdas(X, y, sigma_0, n_lambdas=100, delta=2, method="lasso"):
 
+    """
+        Compute a list of regularization parameters for Lasso and sconco which decrease geometrically.
+    """
+
     n_samples = X.shape[0]
     # Compute lambda_max
 
@@ -60,6 +72,10 @@ def get_lambdas(X, y, sigma_0, n_lambdas=100, delta=2, method="lasso"):
 
 def refit(X, y, beta):
 
+    """
+        Compute a least squares solution by restricting the features onto the support of beta
+    """
+
     lin_reg = LinearRegression()
     support = np.where(beta != 0)[0]
     X_support = X[:, support]
@@ -75,6 +91,10 @@ def refit(X, y, beta):
 
 
 def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
+
+    """
+        Perform a 5-fold cross-validation and return the mean square errors for different parameters lambdas. 
+    """
 
     n_samples, n_features = X.shape
     n_lambdas = len(lambdas)
@@ -95,18 +115,24 @@ def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
             betas, sigmas, gaps, n_iters = \
                 smoothed_concomitant_path(X_train, y_train, lambdas, eps=eps,
                                           sigma_0=sigma_0)
+
         elif method == "lasso":
             betas = lasso_path(X_train, y_train, alphas=lambdas, tol=eps)[1]
             betas = betas.T
+
         elif method in ["ls_smoothed_concomitant", "ls_lasso"]:
             betas = ls_lassolike(X_train, y_train, lambdas, sigma_0=sigma_0,
                                  eps=eps, method=method)
+
         elif method == "grid_concomitant":
             betas, sigmas = grid_concomitant(X_train, y_train, eps, lambdas)
+
         elif method == "SBvG":
             betas, sigmas = SBvG_path(X_train, y_train, lambdas)
+
         elif method == "belloni":
             betas, sigmas = belloni_path(X_train, y_train, lambdas)
+
         else:
             1 / 0  # BOOM !
 
@@ -120,6 +146,11 @@ def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
 
 
 def SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter):
+
+    """
+    Compute sconco estimator at the best regularizer lambda selected by cross-validation.
+    """
+
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps,
                           method="smoothed_concomitant", KF=KF)
 
@@ -132,6 +163,11 @@ def SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter):
 
 
 def SC_CV_LS(X, y, beta_sqrt):
+
+    """
+    Compute a refitted estimator from sconco
+    """
+
     n_samples = X.shape[0]
     # Least square on the support of best smoothed_concomitant
     refit_beta, norm_residual, size = refit(X, y, beta_sqrt)
@@ -141,6 +177,10 @@ def SC_CV_LS(X, y, beta_sqrt):
 
 
 def L_CV(X, y, lambdas, sigma_0, eps=1e-4, KF=None, max_iter=5000):
+
+    """
+    Compute Lasso estimator at the best regularizer lambda selected by cross-validation.
+    """   
 
     n_samples, n_features = X.shape
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps, method="lasso",
@@ -158,6 +198,11 @@ def L_CV(X, y, lambdas, sigma_0, eps=1e-4, KF=None, max_iter=5000):
 
 
 def L_CV_LS(X, y, beta_lasso):
+
+    """
+    Compute a refitted estimator from Lasso
+    """
+
     n_samples = X.shape[0]
     # Least square on the support of best lasso
     beta, norm_residual, size = refit(X, y, beta_lasso)
@@ -167,6 +212,11 @@ def L_CV_LS(X, y, beta_lasso):
 
 
 def L_U(X, y, eps=1e-4, max_iter=5000):
+
+    """
+    Compute Lasso estimator at a universal regularizer lambda recommended by the theory.
+    """ 
+
     n_samples, n_features = X.shape
     # Lasso with universal lambda
     univ_lambda = np.sqrt(2. * np.log(n_features) / float(n_samples))
@@ -180,6 +230,11 @@ def L_U(X, y, eps=1e-4, max_iter=5000):
 
 
 def L_U_LS(X, y, beta_ulasso):
+
+    """
+    Compute a refitted estimator from Lasso with a universal regularizer lambda
+    """
+
     n_samples, n_features = X.shape
     # Least square on the support of univ_lasso
     beta, norm_residual, size = refit(X, y, beta_ulasso)
@@ -189,6 +244,11 @@ def L_U_LS(X, y, beta_ulasso):
 
 
 def SC_RCV(X, y, lambdas, sigma_0, eps, max_iter):
+
+
+    """
+    Compute sconco estimator by refitting cross-validation procedure https://arxiv.org/abs/1004.5178
+    """   
 
     n_samples = X.shape[0]
     KF = KFold(n_samples, 2, shuffle=True, random_state=42)
@@ -206,10 +266,16 @@ def SC_RCV(X, y, lambdas, sigma_0, eps, max_iter):
         refit_beta, norm_residual, size = refit(X[idx2], y[idx2], beta.ravel())
         sigma2 += (norm_residual ** 2) / (n_samples / 2. - size)
         sigma = np.sqrt(sigma2 / 2.)
+
     return beta, sigma
 
 
 def L_RCV(X, y, lambdas, eps, max_iter):
+
+
+    """
+    Compute Lasso estimator by refitting cross-validation procedure https://arxiv.org/abs/1004.5178
+    """      
 
     n_samples = X.shape[0]
     KF = KFold(n_samples, 2, shuffle=True, random_state=42)
@@ -226,6 +292,11 @@ def L_RCV(X, y, lambdas, eps, max_iter):
 
 
 def SZ(X, y, eps, max_iter=100):
+
+
+    """
+    Compute a Scaled-Lasso estimator following the selection of lambda described in https://arxiv.org/abs/1104.4595
+    """  
 
     n_samples, n_features = X.shape
     beta = np.zeros(n_features)
@@ -250,6 +321,10 @@ def SZ(X, y, eps, max_iter=100):
 
 def oneSZ(X, y, eps, lambda_0, max_iter=100):
 
+    """
+    Compute a Scaled-Lasso estimator by alternating a Lasso path and adjustment of the noise level as in https://arxiv.org/abs/1104.4595
+    """ 
+
     n_samples, n_features = X.shape
     beta = np.zeros(n_features)
     sigma_old = 5
@@ -271,6 +346,10 @@ def oneSZ(X, y, eps, lambda_0, max_iter=100):
 
 def grid_concomitant(X, y, eps, lambdas, max_iter=100):
 
+    """
+    Compute a Scaled-Lasso estimator following over a grid of parameters lambda
+    """ 
+
     n_samples, n_features = X.shape
     n_lambdas = len(lambdas)
     sigmas = np.zeros(n_lambdas)
@@ -284,6 +363,10 @@ def grid_concomitant(X, y, eps, lambdas, max_iter=100):
 
 def cv_grid_concomitant(X, y, lambdas, sigma_0, eps, KF):
 
+    """
+    Compute a Scaled-Lasso estimator with parameter lambda selected by cross validation
+    """ 
+
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps,
                           method="grid_concomitant", KF=KF)
     best_l = lambdas[np.argmin(cv_errors)]
@@ -293,6 +376,12 @@ def cv_grid_concomitant(X, y, lambdas, sigma_0, eps, KF):
 
 
 def SBvG_CV(X, y, lambdas, KF=None):
+
+
+    """
+    Compute a concomitant estimator following a re-parameterization of the linear model described in https://arxiv.org/abs/1202.6046
+    """ 
+
     n_samples, n_features = X.shape
     sigma_0 = np.nan
     cv_errors = cross_val(X, y, lambdas, sigma_0, method="SBvG", KF=KF)
@@ -305,6 +394,11 @@ def SBvG_CV(X, y, lambdas, KF=None):
 
 
 def SQRT_Lass_CV(X, y, lambdas, KF=None):
+
+    """
+    Compute a Square-Root Lasso estimator https://arxiv.org/abs/1009.5689 with cvx solver for different regularizer and return the best selected by cross-validation.
+    """ 
+
     n_samples, n_features = X.shape
     sigma_0 = np.nan
     cv_errors = cross_val(X, y, lambdas, sigma_0, method="belloni", KF=KF)
@@ -318,6 +412,10 @@ def SQRT_Lass_CV(X, y, lambdas, KF=None):
 
 def SC_LS(X, y, eps, max_iter):
 
+    """
+    Compute a refitted estimator from Scaled-Lasso
+    """
+
     n_samples = X.shape[0]
     beta, _ = SZ(X, y, eps, max_iter)
 
@@ -329,6 +427,11 @@ def SC_LS(X, y, eps, max_iter):
 
 
 def D2(X, y):
+
+    """
+    Compute the variance estimators proposed by (Lee H. Dicker, 2014)
+    """
+
     n_samples, n_features = X.shape
     nX = float(n_samples)
     pX = float(n_features)
@@ -352,7 +455,6 @@ def D2(X, y):
     return np.sqrt(sigma2_id), np.sqrt(sigma2_no_id)
 
 
-# ??????
 def ls_lassolike(X, y, lambdas, sigma_0=1e-2, eps=1e-4, max_iter=5000,
                  method="ls_lasso"):
 

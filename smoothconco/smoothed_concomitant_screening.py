@@ -11,6 +11,42 @@ BOUND = 3
 def SC_path_screening(X, y, lambdas, sigma_0=None, eps=1e-4, max_iter=5000,
                       f=10, screening=0, warm_start_plus=False):
 
+    # TODO: merge the two codes sc and sc_screening
+
+    """ Compute smoothed concomitant Lasso path with coordinate descent. The objective functions
+
+    P(beta, sigma) = 0.5 * norm(y - X beta, 2)^2 / sigma + sigma / 2 + lambda * norm(beta, 1)
+    
+    argmin_{beta, sigma >= sigma_0} P(beta, sigma)
+
+    Parameters
+    ----------
+    X : {array-like}, shape (n_samples, n_features)
+        Training data.
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    beta_init : array, shape (n_features, ), optional
+        The initial values of the coefficients.
+    lambdas : ndarray
+        List of lambdas where to compute the models.
+    f : float, optional
+        The screening rule will be execute at each f pass on the data
+    eps : float, optional
+        Prescribed accuracy on the duality gap.
+    Returns
+    -------
+    betas : array, shape (n_features, n_alphas)
+        Coefficients along the path.
+    sigmas : array, shape (n_alphas,)
+        The estimated noises sigma at the end of the optimization for each alpha.
+    gaps : array, shape (n_alphas,)
+        The dual gaps at the end of the optimization for each alpha.
+    n_iters : array-like, shape (n_alphas,)
+        The number of iterations taken by the block coordinate descent
+        optimizer to reach the specified accuracy for each lambda.
+    """
+
     if screening == WSTRT_SIGMA_0:
         screening = GAPSAFE
 
