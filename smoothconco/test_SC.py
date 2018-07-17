@@ -24,8 +24,7 @@ sigstar = max(sigma_0, np.linalg.norm(y) / np.sqrt(n_samples))
 lambda_max = np.linalg.norm(np.dot(X.T, y), ord=np.inf) / (n_samples * sigstar)
 
 # SC
-betas, sigmas, gaps, n_iters = SC_path(X, y, [lambda_max / 1.5],
-                                       eps=1e-4, max_iter=5000)
+betas, sigmas, _, _, _ = SC_path(X, y, [lambda_max / 1.5], eps=1e-4)
 
 # SBvG
 betas_SBvG, sigmas_SBvG = SBvG_path(X, y, [lambda_max / 1.5])
@@ -43,7 +42,7 @@ axes[2].set_title("SBvG")
 plt.show()
 
 
-plt.savefig("test_SC.png", format="png")
+# plt.savefig("test_SC.png", format="png")
 
 # Sigma performance:
 print("Sigma estimation:")

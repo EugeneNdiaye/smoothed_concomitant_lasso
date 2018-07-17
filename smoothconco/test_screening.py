@@ -1,7 +1,7 @@
 from itertools import cycle, islice
 import numpy as np
 from data_generation import generate_data
-from smoothed_concomitant_screening import SC_path_screening
+from smoothed_concomitant import SC_path
 import time
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -75,9 +75,9 @@ for ieps, eps in enumerate(eps_):
 
         begin = time.time()
         betas, sigmas, gaps, n_iters, screening_sizes = \
-            SC_path_screening(X, y, lambdas, sigma_0=sigma_0, eps=10**(-eps),
-                              max_iter=5000, f=10, screening=screening,
-                              warm_start_plus=wstp)
+            SC_path(X, y, lambdas, sigma_0=sigma_0, eps=10**(-eps),
+                    max_iter=5000, f=10, screening=screening,
+                    warm_start_plus=wstp)
         duration = time.time() - begin
 
         times[iscreening, ieps] = duration
