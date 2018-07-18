@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from smoothconco.smoothed_concomitant import SC_path
+from smoothconco.smoothed_concomitant import SCRegressor
 from SBvG import SBvG_path
 from data_generation import generate_data
 
@@ -24,7 +24,9 @@ sigstar = max(sigma_0, np.linalg.norm(y) / np.sqrt(n_samples))
 lambda_max = np.linalg.norm(np.dot(X.T, y), ord=np.inf) / (n_samples * sigstar)
 
 # SC
-betas, sigmas, _, _, _ = SC_path(X, y, [lambda_max / 1.5], eps=1e-4)
+clf = SCRegressor(lambdas=[lambda_max / 1.5], eps=1e-4)
+clf.fit(X, y)
+betas, sigmas = clf.betas, clf.sigmas
 
 # SBvG
 betas_SBvG, sigmas_SBvG = SBvG_path(X, y, [lambda_max / 1.5])
