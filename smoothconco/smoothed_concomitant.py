@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import norm
-from cd_smoothed_concomitant import cd_smoothed_concomitant_fast
+from .cd_smoothed_concomitant import cd_smoothed_concomitant_fast
 
 NO_SCREENING = 0
 GAPSAFE = 1
@@ -10,12 +10,11 @@ BOUND = 3
 
 def SC_path(X, y, lambdas, beta_init=None, sigma_0=None, eps=1e-4,
             max_iter=5000, f=10, screening=1, warm_start_plus=False):
-
-    """ Compute smoothed concomitant Lasso path with coordinate descent. The objective functions
-
-    P(beta, sigma) = 0.5 * norm(y - X beta, 2)^2 / sigma + sigma / 2 + lambda * norm(beta, 1)
-    
-    argmin_{beta, sigma >= sigma_0} P(beta, sigma)
+    """ Compute smoothed concomitant Lasso path with coordinate descent.
+    The objective function is
+    P(beta, sigma) = 0.5 * norm(y - X beta, 2)^2 / sigma + sigma / 2 +
+                     lambda * norm(beta, 1)
+    and we solve min_{beta, sigma >= sigma_0} P(beta, sigma)
 
     Parameters
     ----------
@@ -37,7 +36,7 @@ def SC_path(X, y, lambdas, beta_init=None, sigma_0=None, eps=1e-4,
     betas : array, shape (n_features, n_alphas)
         Coefficients along the path.
     sigmas : array, shape (n_alphas,)
-        The estimated noises sigma at the end of the optimization for each alpha.
+        The estimated noises sigma for each lambda.
     gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
     n_iters : array-like, shape (n_alphas,)

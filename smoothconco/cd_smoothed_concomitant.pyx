@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+
 from libc.math cimport fabs, sqrt
 from libc.stdlib cimport qsort
 from scipy.linalg.cython_blas cimport daxpy, ddot, dnrm2, dscal
@@ -10,7 +11,7 @@ cimport cython
 
 
 cdef:
-    int inc = 1 # Default array increment for cython_blas operation
+    int inc = 1  # Default array increment for cython_blas operation
     int NO_SCREENING = 0
     int GAPSAFE = 1
     int WSTRT_SIGMA_0 = 2
@@ -145,7 +146,6 @@ def cd_smoothed_concomitant_fast(double[::1, :] X, double[:] y, double[:] beta,
         double sqrtn_over_nrmy = sqrt_n / nrm_y
         double[:] l_sqn_over_norm_X = np.zeros(n_features, order='F')
 
-
     with nogil:
         if wstr_plus == 0:
             for j in range(n_features):
@@ -153,7 +153,6 @@ def cd_smoothed_concomitant_fast(double[::1, :] X, double[:] y, double[:] beta,
 
         if screening == BOUND:
             l_sqn_over_norm_X[j] = l_sqn / sqrt(norm_X2[j])
-
 
         for k in range(max_iter):
 
@@ -235,7 +234,6 @@ def cd_smoothed_concomitant_fast(double[::1, :] X, double[:] y, double[:] beta,
                         XTR[j] = 0
                         disabled_features[j] = 1
                         n_active_features -= 1
-
 
             for j in range(n_features):
 

@@ -1,7 +1,7 @@
 from itertools import cycle, islice
 import numpy as np
 from data_generation import generate_data
-from smoothed_concomitant import SC_path
+from smoothconco.smoothed_concomitant import SC_path
 import time
 import matplotlib.pyplot as plt
 import pandas as pd

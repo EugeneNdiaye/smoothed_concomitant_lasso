@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from smoothed_concomitant import SC_path
+from smoothconco.smoothed_concomitant import SC_path
 from SBvG import SBvG_path
 from data_generation import generate_data
 
@@ -42,7 +42,7 @@ axes[2].set_title("SBvG")
 plt.show()
 
 
-# plt.savefig("test_SC.png", format="png")
+plt.savefig("test_SC.png", format="png")
 
 # Sigma performance:
 print("Sigma estimation:")
