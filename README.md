@@ -1,15 +1,15 @@
-# Smooth Concomitant Lasso
+# Smoothed Concomitant Lasso
 
 
 This package implements a simple scikit-learn style estimator for the Smoothed Concomitant Lasso https://arxiv.org/abs/1606.02702.
 
 ## Motivation
 
-Automated noise level estimatotion can be of interest in high dimension, for instance when uncertainty quantification is required, as well as when no cross-validation can be performed to tune the regularization paramter.
+Automated noise level estimatotion can be of interest in high dimension, for instance when uncertainty quantification is required, as well as when no cross-validation can be performed to tune the regularization parameter.
 
 ## Example
 
-The API of the ``Smoothed_Concomitant_Lasso`` code is designed for compatibility with the [scikit-learn](http://scikit-learn.org) project.
+The API of the ``smoothconco`` code is designed for compatibility with the [scikit-learn](http://scikit-learn.org) project.
 
 ```python
 import numpy as np
@@ -38,8 +38,9 @@ sigstar = max(sigma_0, np.linalg.norm(y) / np.sqrt(n_samples))
 lambda_max = np.linalg.norm(np.dot(X.T, y), ord=np.inf) / (n_samples * sigstar)
 
 # SC
-betas, sigmas, gaps, n_iters = SC_path(X, y, [lambda_max / 1.5],
-                                       eps=1e-4, max_iter=5000)
+clf = SCRegressor(lambdas=[lambda_max / 1.5], eps=1e-4)
+clf.fit(X, y)
+betas, sigmas = clf.betas, clf.sigmas
 
 # SBvG
 betas_SBvG, sigmas_SBvG = SBvG_path(X, y, [lambda_max / 1.5])
@@ -83,7 +84,7 @@ print(np.linalg.norm(true_beta - betas_SBvG[0]) / n_features)
 
 ## Installation & Requirements
 
-The ``Smoothed_Concomitant_Lasso`` package itself is fairly lightweight. It is tested on Python 2.7 and 3.4-3.5, and depends on the following packages:
+The ``smoothconco`` package itself is fairly lightweight. It is tested on Python 2.7 and 3.4-3.5, and depends on the following packages:
 
 - [numpy](http://numpy.org)
 - [scipy](http://scipy.org)
@@ -97,7 +98,7 @@ package manager, these requirements can be installed as follows:
 $ conda install numpy scipy scikit-learn cython
 ```
 
-To install ``Smoothed_Concomitant_Lasso`` from source, first download the source repository and then run
+To install ``smoothconco`` from source, first download the source repository and then run
 
 
 ```

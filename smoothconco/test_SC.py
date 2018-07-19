@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from smoothconco.smoothed_concomitant import SCRegressor
 from SBvG import SBvG_path
-from data_generation import generate_data
+from tools import generate_data
 
 # Generate dataset
 
