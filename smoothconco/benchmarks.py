@@ -5,14 +5,9 @@ from itertools import product
 import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.cross_validation import KFold
-from tools import (generate_data, get_lambdas, sigmas_oracle,
-                   sigma_rcv_lasso, sigma_smoothed_concomitant,
-                   sigma_smoothed_concomitant_ls,
-                   sigma_lasso, sigma_staedler, sigma_belloni,
-                   sigma_lasso_ls, sigma_lasso_univ, sigma_lasso_univ_ls,
-                   sigmas_scaled_lasso, sigmas_moment_estimators,
-                   sigmas_cv_ls_lassolike,
-                   cv_grid_scaled_lasso)
+from tools import (generate_data, get_lambdas, OR, L_RCV, SC_CV, SC_CV_LS,
+                   L_CV, SBvG_CV, SQRT_Lasso_CV, L_CV_LS, L_U, L_U_LS, SZ_LS,
+                   D2, estimator_LS_CV, SZ_CV)
 
 try:
     import mkl
@@ -87,7 +82,7 @@ def run_one(n_s, n_samples, n_features, n_lambdas, sigma, snr, sparsity,
 
     print("Oracle")
     tic = time.time()
-    sigma_OR, sigma_LS_OR = sigmas_oracle(X, y, true_beta)
+    sigma_OR, sigma_LS_OR = OR(X, y, true_beta)
     toc = time.time() - tic
     results.append(['OR', sigma_LS_OR, toc])
     # results.append(['LS_OR', sigma_LS_OR, toc])
@@ -97,33 +92,33 @@ def run_one(n_s, n_samples, n_features, n_lambdas, sigma, snr, sparsity,
     lambdas = get_lambdas(X, y, sigma_0=sigma_0, n_lambdas=n_lambdas, delta=2,
                           method="lasso")
     tic = time.time()
-    sigma_L, beta_lasso = sigma_lasso(X, y, lambdas, sigma_0, eps, KF,
-                                      max_iter)
+    beta_lasso, sigma_L = L_CV(X, y, lambdas, sigma_0, eps, KF, max_iter)
     toc = time.time() - tic
     results.append(['L_CV', sigma_L, toc])
-    sigma_LS_L = sigma_lasso_ls(X, y, beta_lasso)
+    sigma_LS_L = L_CV_LS(X, y, beta_lasso)[1]
     toc = time.time() - tic
     results.append(['L_CV_LS', sigma_LS_L, toc])
 
     tic = time.time()
-    sigma_U_L, beta_ulasso = sigma_lasso_univ(X, y, eps=eps, max_iter=max_iter)
+    beta_ulasso, sigma_U_L = L_U(X, y, eps=eps, max_iter=max_iter)
     toc = time.time() - tic
     results.append(['L_U', sigma_U_L, toc])
-    sigma_LS_U_L = sigma_lasso_univ_ls(X, y, beta_ulasso)
+    sigma_LS_U_L = L_U_LS(X, y, beta_ulasso)[1]
     toc = time.time() - tic
     results.append(['L_U_LS', sigma_LS_U_L, toc])
 
     print("RCV Lasso")
     tic = time.time()
-    sigma_RCV_L = sigma_rcv_lasso(X, y, lambdas, eps, max_iter)
+    sigma_RCV_L = L_RCV(X, y, lambdas, eps, max_iter)[1]
     toc = time.time() - tic
     results.append(['L_RCV', sigma_RCV_L, toc])
 
     print("cv_ls estimators")
     tic = time.time()
     sigma_cv_ls_lasso = \
-        sigmas_cv_ls_lassolike("ls_lasso", X, y, lambdas,
-                               sigma_0=sigma_0, eps=eps, max_iter=max_iter)
+        estimator_LS_CV("ls_lasso", X, y, lambdas, sigma_0=sigma_0, eps=eps,
+                        max_iter=max_iter)[1]
+
     toc = time.time() - tic
     results.append(['L_LS_CV', sigma_cv_ls_lasso, toc])
 
@@ -132,51 +127,48 @@ def run_one(n_s, n_samples, n_features, n_lambdas, sigma, snr, sparsity,
     lambdas = get_lambdas(X, y, sigma_0=sigma_0, n_lambdas=n_lambdas, delta=2,
                           method="no_lasso")
     tic = time.time()
-    sigma_SC, beta_sc = \
-        sigma_smoothed_concomitant(X, y, lambdas, sigma_0, eps, KF, max_iter)
+    beta_sc, sigma_SC = SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter)
     toc = time.time() - tic
     results.append(['SC_CV', sigma_SC, toc])
-    sigma_SC_LS = \
-        sigma_smoothed_concomitant_ls(X, y, beta_sc)
+    sigma_SC_LS = SC_CV_LS(X, y, beta_sc)
     toc = time.time() - tic
     results.append(['SC_CV_LS', sigma_SC_LS, toc])
 
     print("Scaled lasso")
     tic = time.time()
-    sigma_SZ, sigma_SZ_LS = sigmas_scaled_lasso(X, y, eps, max_iter)
+    sigma_SZ, sigma_SZ_LS = SZ_LS(X, y, eps, max_iter)
     toc = time.time() - tic
     results.append(['SZ', sigma_SZ, toc])
     results.append(['SZ_LS', sigma_SZ_LS, toc])
 
     print("Moment estimators")
     tic = time.time()
-    sigma_D1, sigma_D2 = sigmas_moment_estimators(X, y)
+    sigma_D1, sigma_D2 = D2(X, y)
     toc = time.time() - tic
     # results.append(['D1', sigma_D1, toc])
     results.append(['D2', sigma_D2, toc])
 
     tic = time.time()
-    sigma_cv_ls_sc = \
-        sigmas_cv_ls_lassolike("ls_smoothed_concomitant", X, y, lambdas,
-                               sigma_0=sigma_0, eps=eps, max_iter=max_iter,
-                               KF=KF)
+    sigma_SC_LS_CV = \
+        estimator_LS_CV("ls_smoothed_concomitant", X, y, lambdas,
+                        sigma_0=sigma_0, eps=eps, max_iter=max_iter, KF=KF)[1]
     toc = time.time() - tic
-    results.append(['SC_LS_CV', sigma_cv_ls_sc, toc])
+    results.append(['SC_LS_CV', sigma_SC_LS_CV, toc])
 
     tic = time.time()
-    sigma_sz_cv = cv_grid_scaled_lasso(X, y, lambdas, sigma_0, eps, KF)
+    sigma_sz_cv = SZ_CV(X, y, lambdas, sigma_0, eps, KF)[1]
     toc = time.time() - tic
     results.append(['SZ_CV', sigma_sz_cv, toc])
 
     print("Staedler estimator")
     tic = time.time()
-    sigma_SBvG, _ = sigma_staedler(X, y, lambdas)
+    sigma_SBvG = SBvG_CV(X, y, lambdas)[1]
     toc = time.time() - tic
     results.append(['SBvG_CV', sigma_SBvG, toc])
 
     print("belloni estimator")
     tic = time.time()
-    sigma_sqrt_lasso, _ = sigma_belloni(X, y, lambdas)
+    sigma_sqrt_lasso = SQRT_Lasso_CV(X, y, lambdas)[1]
     toc = time.time() - tic
     results.append(['SQRT-Lasso_CV', sigma_sqrt_lasso, toc])
 

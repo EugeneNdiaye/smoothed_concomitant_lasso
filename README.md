@@ -5,7 +5,7 @@ This package implements a simple scikit-learn style estimator for the Smoothed C
 
 ## Motivation
 
-Automated noise level estimatotion can be of interest in high dimension, for instance when uncertainty quantification is required, as well as when no cross-validation can be performed to tune the regularization parameter.
+Automated noise level estimation can be of interest in high dimension, for instance when uncertainty quantification is required, as well as when no cross-validation can be performed to tune the regularization parameter.
 
 ## Example
 

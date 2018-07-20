@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import norm
 from .cd_smoothed_concomitant import cd_smoothed_concomitant_fast
 from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.utils.validation import check_X_y
 
 NO_SCREENING = 0
 GAPSAFE = 1
@@ -46,8 +47,8 @@ def SC_path(X, y, lambdas, beta_init=None, sigma_0=None, eps=1e-4,
     """
 
     # Fortran-contiguous array are used to avoid useless copy of the data.
-    X = np.asfortranarray(X)
-    y = np.asfortranarray(y)
+    X = np.asfortranarray(X, dtype=np.float)
+    y = np.asfortranarray(y, dtype=np.float)
 
     if screening == WSTRT_SIGMA_0:
         screening = GAPSAFE
@@ -89,6 +90,8 @@ def SC_path(X, y, lambdas, beta_init=None, sigma_0=None, eps=1e-4,
 
     for t in range(n_lambdas):
 
+        # import pdb; pdb.set_trace()
+
         beta_init, sigmas[t], gaps[t], norm_residual, n_iters[t], \
             n_active_features[t] = \
             cd_smoothed_concomitant_fast(X, y, beta_init, abs_XTy, XTR,
@@ -128,12 +131,12 @@ class SCRegressor(BaseEstimator, RegressorMixin):
     """ sklearn compatible estimator for the Smoothed Concomitant Lasso.
     """
 
-    def __init__(self, lambdas=None, eps=1e-4, max_iter=5000, f=10.):
+    def __init__(self, lambdas=None, eps=1e-4, max_iter=5000):
 
+        self.lambdas = lambdas
         self.eps = eps
         self.max_iter = max_iter
-        self.f = f
-        self.lambdas = lambdas
+
         self.sigma_0 = None
         self.beta_init = None
 
@@ -153,7 +156,11 @@ class SCRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
+        X, y = check_X_y(X, y)
         n_samples, n_features = X.shape
+
+        if self.beta_init is None:
+            self.beta_init = np.zeros(n_features, order='F')
 
         if self.sigma_0 is None:
             self.sigma_0 = (np.linalg.norm(y) / np.sqrt(n_samples)) * 1e-2
@@ -167,7 +174,7 @@ class SCRegressor(BaseEstimator, RegressorMixin):
                                        np.log10(lambda_max), n_lambdas)[::-1]
 
         model = SC_path(X, y, self.lambdas, self.beta_init, self.sigma_0,
-                        self.eps, self.max_iter, self.f)
+                        self.eps, self.max_iter)
 
         self.betas = model[0]
         self.sigmas = model[1]
@@ -191,25 +198,5 @@ class SCRegressor(BaseEstimator, RegressorMixin):
         """
 
         pred = np.dot(X, self.betas.T)
+
         return pred
-
-    def score(self, X, y):
-        """ Compute a prediction error wrt y.
-
-        Parameters
-        ----------
-        X : {array-like}, shape (n_samples, n_features)
-            Testing data.
-        y : ndarray, shape = (n_samples,)
-            Testing target values
-
-        Returns
-        -------
-        pred_error : ndarray, shape = (n_lambdas,)
-            Prediction error wrt target values for different parameter lambda.
-        """
-
-        n_lambdas = self.betas.shape[0]
-        pred_error = [np.linalg.norm(np.dot(X, self.betas.T)[:, l] - y)
-                      for l in range(n_lambdas)]
-        return np.array(pred_error)

@@ -142,11 +142,11 @@ def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
             betas = betas.T
 
         elif method in ["ls_smoothed_concomitant", "ls_lasso"]:
-            betas = ls_lassolike(X_train, y_train, lambdas, sigma_0=sigma_0,
+            betas = estimator_LS(X_train, y_train, lambdas, sigma_0=sigma_0,
                                  eps=eps, method=method)
 
-        elif method == "grid_concomitant":
-            betas, sigmas = grid_concomitant(X_train, y_train, eps, lambdas)
+        elif method == "SZ_path":
+            betas, sigmas = SZ_path(X_train, y_train, eps, lambdas)
 
         elif method == "SBvG":
             betas, sigmas = SBvG_path(X_train, y_train, lambdas)
@@ -164,6 +164,22 @@ def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
         i_fold += 1
 
     return np.mean(errors, axis=1)
+
+
+def OR(X, y, true_beta):
+    """
+    Compute oracle estimators of the noise level
+    """
+
+    n_samples = X.shape[0]
+    sigma2_oracle = \
+        np.linalg.norm(y - np.dot(X, true_beta)) ** 2 / float(n_samples)
+
+    # Least square on the support of the oracle
+    refit_beta, norm_residual, size = refit(X, y, true_beta)
+    sigma2_Ls_oracle = (norm_residual ** 2) / float(n_samples - size)
+
+    return np.sqrt(sigma2_oracle), np.sqrt(sigma2_Ls_oracle)
 
 
 def SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter):
@@ -221,7 +237,7 @@ def L_CV_LS(X, y, beta_lasso):
     """
     Compute a refitted estimator from Lasso
     """
-
+    ### !!! no cv here ?
     n_samples = X.shape[0]
     # Least square on the support of best lasso
     beta, norm_residual, size = refit(X, y, beta_lasso)
@@ -359,7 +375,7 @@ def oneSZ(X, y, eps, lambda_0, max_iter=100):
     return beta, sigma_new
 
 
-def grid_concomitant(X, y, eps, lambdas, max_iter=100):
+def SZ_path(X, y, eps, lambdas, max_iter=100):
     """
     Compute a Scaled-Lasso estimator following over a grid of parameters lambda
     """
@@ -375,14 +391,14 @@ def grid_concomitant(X, y, eps, lambdas, max_iter=100):
     return betas, sigmas
 
 
-def cv_grid_concomitant(X, y, lambdas, sigma_0, eps, KF):
+def SZ_CV(X, y, lambdas, sigma_0, eps, KF):
     """
     Compute a Scaled-Lasso estimator with parameter lambda selected by 
     cross validation
     """
 
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps,
-                          method="grid_concomitant", KF=KF)
+                          method="SZ_path", KF=KF)
     best_l = lambdas[np.argmin(cv_errors)]
     beta, sigma = oneSZ(X, y, eps, best_l)[0]
 
@@ -406,7 +422,7 @@ def SBvG_CV(X, y, lambdas, KF=None):
     return beta_opt, sigma_opt[0]
 
 
-def SQRT_Lass_CV(X, y, lambdas, KF=None):
+def SQRT_Lasso_CV(X, y, lambdas, KF=None):
     """
     Compute a Square-Root Lasso estimator https://arxiv.org/abs/1009.5689 with 
     cvx solver for different regularizer and return the best selected by 
@@ -424,19 +440,20 @@ def SQRT_Lass_CV(X, y, lambdas, KF=None):
     return beta_opt, sigma_opt[0]
 
 
-def SC_LS(X, y, eps, max_iter):
+def SZ_LS(X, y, eps, max_iter):
     """
     Compute a refitted estimator from Scaled-Lasso
     """
 
     n_samples = X.shape[0]
-    beta, _ = SZ(X, y, eps, max_iter)
+    beta, sigma = SZ(X, y, eps, max_iter)
 
     # Least square on the support of the scaled lasso
     refit_beta, norm_residual, size = refit(X, y, beta)
     sigma_Ls = norm_residual / np.sqrt(n_samples - size)
 
-    return refit_beta, sigma_Ls
+    # return refit_beta, sigma_Ls
+    return sigma, sigma_Ls
 
 
 def D2(X, y):
@@ -467,7 +484,7 @@ def D2(X, y):
     return np.sqrt(sigma2_id), np.sqrt(sigma2_no_id)
 
 
-def ls_lassolike(X, y, lambdas, sigma_0=1e-2, eps=1e-4, max_iter=5000,
+def estimator_LS(X, y, lambdas, sigma_0=1e-2, eps=1e-4, max_iter=5000,
                  method="ls_lasso"):
 
     if type(lambdas) != np.ndarray:
@@ -496,8 +513,8 @@ def ls_lassolike(X, y, lambdas, sigma_0=1e-2, eps=1e-4, max_iter=5000,
     return refit_betas
 
 
-def sigmas_cv_ls_lassolike(method, X, y, lambdas, sigma_0, eps=1e-4,
-                           max_iter=5000, KF=None):
+def estimator_LS_CV(method, X, y, lambdas, sigma_0, eps=1e-4, max_iter=5000,
+                    KF=None):
 
     # TODO do better
     if type(lambdas) != np.ndarray:
@@ -506,7 +523,7 @@ def sigmas_cv_ls_lassolike(method, X, y, lambdas, sigma_0, eps=1e-4,
     n_samples = X.shape[0]
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps, method=method)
     best_lambda = lambdas[np.argmin(cv_errors)]
-    beta = ls_lassolike(X, y, best_lambda, sigma_0=sigma_0, eps=eps,
+    beta = estimator_LS(X, y, best_lambda, sigma_0=sigma_0, eps=eps,
                         max_iter=max_iter, method=method).ravel()
     size = len(np.where(beta != 0)[0])
     sigma = np.linalg.norm(y - np.dot(X, beta)) / np.sqrt(n_samples - size)
