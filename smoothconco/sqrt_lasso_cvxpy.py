@@ -27,4 +27,4 @@ def belloni_path(X, y, lambda_grid, solver='ECOS'):
         sigmas[i] = \
             np.linalg.norm(y - np.dot(X, betas[i])) / np.sqrt(n_samples)
 
-    return sigmas, betas
+    return betas, sigmas

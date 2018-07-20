@@ -16,23 +16,14 @@ except Exception as e:
     pass
 
 
-n_folds = 2  # Number of fold used in each cross validation
+n_folds = 5  # Number of fold used in each cross validation
 scale_sigma_0 = 1e-2
 eps = 1e-4
 sigma = 1
-max_iter = 50
-n_simulations = 5
-n_lambdas = 10
-n_samples = 10
-
-# n_folds = 5  # Number of fold used in each cross validation
-# scale_sigma_0 = 1e-2
-# eps = 1e-4
-# sigma = 1
-# max_iter = 5000
-# n_simulations = 50
-# n_lambdas = 100
-# n_samples = 100
+max_iter = 5000
+n_simulations = 50
+n_lambdas = 100
+n_samples = 100
 
 # Done
 # sparsitys = [0.9]
@@ -96,6 +87,7 @@ def run_one(n_s, n_samples, n_features, n_lambdas, sigma, snr, sparsity,
     toc = time.time() - tic
     results.append(['L_CV', sigma_L, toc])
     sigma_LS_L = L_CV_LS(X, y, beta_lasso)[1]
+    # TODO: merge CV_LS procedure # TODO: merge CV_LS procedure
     toc = time.time() - tic
     results.append(['L_CV_LS', sigma_LS_L, toc])
 
@@ -130,7 +122,7 @@ def run_one(n_s, n_samples, n_features, n_lambdas, sigma, snr, sparsity,
     beta_sc, sigma_SC = SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter)
     toc = time.time() - tic
     results.append(['SC_CV', sigma_SC, toc])
-    sigma_SC_LS = SC_CV_LS(X, y, beta_sc)
+    sigma_SC_LS = SC_CV_LS(X, y, beta_sc)[1]
     toc = time.time() - tic
     results.append(['SC_CV_LS', sigma_SC_LS, toc])
 

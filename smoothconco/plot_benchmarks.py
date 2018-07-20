@@ -45,7 +45,7 @@ N_JOBS_ITER = -1
 for n_features, snr, sparsity, corr in \
         product(n_features_grid, snrs, sparsitys, correlations):
     if ((1 - sparsity) * n_features) > n_samples:
-        print "skipping"
+        print("skipping")
         continue
 
     name = ("s" + str(int(10 * sparsity)) +

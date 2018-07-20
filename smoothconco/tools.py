@@ -133,7 +133,7 @@ def cross_val(X, y, lambdas, sigma_0, eps=1e-4, method="lasso", KF=None):
         y_test = y[test_index]
 
         if method == "smoothed_concomitant":
-            betas, sigmas, gaps, n_iters = \
+            betas, sigmas, gaps, n_iters, _ = \
                 SC_path(X_train, y_train, lambdas, eps=eps,
                         sigma_0=sigma_0)
 
@@ -172,14 +172,13 @@ def OR(X, y, true_beta):
     """
 
     n_samples = X.shape[0]
-    sigma2_oracle = \
-        np.linalg.norm(y - np.dot(X, true_beta)) ** 2 / float(n_samples)
+    sgm2_OR = np.linalg.norm(y - np.dot(X, true_beta)) ** 2 / float(n_samples)
 
     # Least square on the support of the oracle
     refit_beta, norm_residual, size = refit(X, y, true_beta)
     sigma2_Ls_oracle = (norm_residual ** 2) / float(n_samples - size)
 
-    return np.sqrt(sigma2_oracle), np.sqrt(sigma2_Ls_oracle)
+    return np.sqrt(sgm2_OR), np.sqrt(sigma2_Ls_oracle)
 
 
 def SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter):
@@ -192,21 +191,20 @@ def SC_CV(X, y, lambdas, sigma_0, eps, KF, max_iter):
                           method="smoothed_concomitant", KF=KF)
 
     lsqrt = lambdas[np.argmin(cv_errors)]
-    beta, sigma, _, _ = \
-        SC_path(X, y, [lsqrt], sigma_0=sigma_0, eps=eps,
-                max_iter=max_iter)
+    beta, sigma, _, _, _ = \
+        SC_path(X, y, [lsqrt], sigma_0=sigma_0, eps=eps, max_iter=max_iter)
 
     return beta.ravel(), sigma[0]
 
 
-def SC_CV_LS(X, y, beta_sqrt):
+def SC_CV_LS(X, y, beta):
     """
     Compute a refitted estimator from sconco
     """
 
     n_samples = X.shape[0]
     # Least square on the support of best smoothed_concomitant
-    refit_beta, norm_residual, size = refit(X, y, beta_sqrt)
+    refit_beta, norm_residual, size = refit(X, y, beta)
     sigma = norm_residual / np.sqrt(n_samples - size)
 
     return refit_beta, sigma
@@ -237,7 +235,8 @@ def L_CV_LS(X, y, beta_lasso):
     """
     Compute a refitted estimator from Lasso
     """
-    ### !!! no cv here ?
+    ### !!! no cv here, it is directly perfomed is benchmark.
+    # TODO: merge CV_LS procedure
     n_samples = X.shape[0]
     # Least square on the support of best lasso
     beta, norm_residual, size = refit(X, y, beta_lasso)
@@ -292,9 +291,8 @@ def SC_RCV(X, y, lambdas, sigma_0, eps, max_iter):
         cv_errors = cross_val(X, y, lambdas, sigma_0, eps=1e-4,
                               method="smoothed_concomitant")
         lsqrt = lambdas[np.argmin(cv_errors)]
-        beta, sigma_sqrt, _, _ = \
-            SC_path(X[idx1], y[idx1], [lsqrt],
-                    sigma_0=sigma_0, eps=eps,
+        beta, sigma_sqrt, _, _, _= \
+            SC_path(X[idx1], y[idx1], [lsqrt], sigma_0=sigma_0, eps=eps,
                     max_iter=max_iter)
         refit_beta, norm_residual, size = refit(X[idx2], y[idx2], beta.ravel())
         sigma2 += (norm_residual ** 2) / (n_samples / 2. - size)
@@ -400,7 +398,7 @@ def SZ_CV(X, y, lambdas, sigma_0, eps, KF):
     cv_errors = cross_val(X, y, lambdas, sigma_0, eps=eps,
                           method="SZ_path", KF=KF)
     best_l = lambdas[np.argmin(cv_errors)]
-    beta, sigma = oneSZ(X, y, eps, best_l)[0]
+    beta, sigma = oneSZ(X, y, eps, best_l)
 
     return beta, sigma
 
@@ -435,9 +433,8 @@ def SQRT_Lasso_CV(X, y, lambdas, KF=None):
 
     l_ = lambdas[np.argmin(cv_errors)]
     beta_opt, sigma_opt = belloni_path(X, y, [l_])
-    beta_opt = beta_opt.ravel()
 
-    return beta_opt, sigma_opt[0]
+    return beta_opt.ravel(), sigma_opt[0]
 
 
 def SZ_LS(X, y, eps, max_iter):

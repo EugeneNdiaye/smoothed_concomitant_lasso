@@ -119,6 +119,8 @@ def SC_path(X, y, lambdas, beta_init=None, sigma_0=None, eps=1e-4,
                                              wstr_plus=1)
 
         if gaps[t] > eps * nrm_y:
+            # TODO: check (with huge care) if the stopping criterion
+            # should depend on sigma_0
 
             print("Warning: did not converge, t = %d" % t)
             print("gap = %f, eps = %f" % (gaps[t], eps))
